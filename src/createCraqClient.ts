@@ -1,11 +1,6 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import historyMiddleware from 'router6-history/src';
-import { ForbiddenError, isRoutingError, NotFoundError } from 'router6/src';
-
-import Context from 'craq/src/core/Context';
-import actionsMiddleware from 'craq/src/core/actionsMiddleware';
-import createApp from 'craq/src/core/createApp';
+import { Context, actionsMiddleware } from 'craq';
+import { ForbiddenError, isRoutingError, NotFoundError } from 'router6';
+import historyMiddleware from 'router6-history';
 
 type ServerStats = {
   actions: { [actionName: string]: boolean };
@@ -15,15 +10,19 @@ type ServerStats = {
 const rehydrateError = (error) => {
   switch (error?.code) {
     case 404:
-      return new NotFoundError(error.message);
+      return new NotFoundError(error.message, error.meta);
     case 403:
-      return new ForbiddenError(error.message);
+      return new ForbiddenError(error.message, error.meta);
     default:
       return undefined;
   }
 };
 
-export const createCraqClient = (context: Context<any>, App, { bundles }) => {
+const createCraqClient = (
+  context: Context<any>,
+  App,
+  { bundles, renderers },
+) => {
   context.router
     .use(() => ({ to }, next) => {
       const bundle = bundles[to.config.bundle];
@@ -40,6 +39,7 @@ export const createCraqClient = (context: Context<any>, App, { bundles }) => {
             if (context.router.isStarted()) {
               execution.catch((e) => {
                 if (isRoutingError(e)) {
+                  // @ts-ignore
                   context.router.error = e;
                 }
               });
@@ -53,8 +53,6 @@ export const createCraqClient = (context: Context<any>, App, { bundles }) => {
         (__SERVER_STATS__ as ServerStats).actions,
       ),
     );
-
-  const CraqApp = createApp(App);
 
   let runPromise;
 
@@ -70,10 +68,20 @@ export const createCraqClient = (context: Context<any>, App, { bundles }) => {
 
       return {
         render: (node: Element | Document) =>
-          runPromise.then(() =>
-            ReactDOM.hydrateRoot(node, <CraqApp context={context} />),
-          ),
+          runPromise.then(({ config, name }) => {
+            const renderer = renderers[config.renderer];
+
+            if (!renderer) {
+              throw new Error(
+                `Renderer "${config.renderer}" was not found, check "${name}" route config`,
+              );
+            }
+
+            return renderer(context, App, { node });
+          }),
       };
     },
   };
 };
+
+export default createCraqClient;

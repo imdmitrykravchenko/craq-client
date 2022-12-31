@@ -1,28 +1,35 @@
-import { ComponentType } from 'react';
-import Router6, { RouteDefinition } from 'router6/src';
-import { ReducersMapObject, createStore, combineReducers } from 'redux';
+import Router6, { RouteDefinition } from 'router6';
+import { ReducersMapObject, configureStore } from '@reduxjs/toolkit';
+import { CraqAction, Registry } from 'craq';
+import createHead from './createHead';
+import ClientContext from './ClientContext';
 
-import Context from 'craq/src/core/Context';
-import { CraqAction, Registry } from 'craq/src/types';
-import { InitialState } from './types';
+const configureContext = <T, S>(
+  {
+    reducers,
+    actions,
+    components,
+    routes,
+  }: {
+    actions: Registry<CraqAction<S>>;
+    components: Registry<T>;
+    reducers: ReducersMapObject;
+    routes: RouteDefinition[];
+  },
+  head = createHead(),
+) =>
+  new ClientContext(
+    {
+      store: configureStore({
+        reducer: reducers,
+        devTools: true,
+        // @ts-ignore
+        preloadedState: window.__INITIAL_STATE__ as S,
+      }),
+      router: new Router6(routes),
+      registries: { actions, components },
+    },
+    head,
+  );
 
-export default ({
-  reducers,
-  actions,
-  components,
-  routes,
-}: {
-  actions: Registry<CraqAction>;
-  components: Registry<ComponentType>;
-  reducers: ReducersMapObject;
-  routes: RouteDefinition[];
-}) =>
-  new Context({
-    store: createStore(
-      combineReducers(reducers),
-      // @ts-ignore
-      __INITIAL_STATE__ as InitialState,
-    ),
-    router: new Router6(routes),
-    registries: { actions, components },
-  });
+export default configureContext;
