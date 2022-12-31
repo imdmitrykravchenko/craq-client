@@ -1,11 +1,10 @@
-import { Store } from '@reduxjs/toolkit';
 import Router6 from 'router6';
-import { Registries, Context } from 'craq';
+import { Registries, Context, Store } from 'craq';
 
 import { ClientActionContext } from './types';
 import { Head } from './createHead';
 
-export default class ClientContext<S> extends Context<S> {
+export default class ClientContext<S, A> extends Context<S, A> {
   public head: Head;
   protected actionContext: ClientActionContext<S>;
   constructor(
@@ -15,7 +14,7 @@ export default class ClientContext<S> extends Context<S> {
       registries,
     }: {
       registries: Registries<S>;
-      store: Store<S>;
+      store: Store<S, A>;
       router: Router6;
     },
     head: Head,

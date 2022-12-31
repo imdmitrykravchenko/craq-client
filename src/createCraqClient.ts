@@ -19,7 +19,7 @@ const rehydrateError = (error) => {
 };
 
 const createCraqClient = (
-  context: Context<any>,
+  context: Context<any, any>,
   App,
   { bundles, renderers },
 ) => {
