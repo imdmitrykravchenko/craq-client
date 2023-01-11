@@ -15,7 +15,7 @@ const createCraqClient = (context: Context<any, any>, { renderers }) => {
   return {
     run: (href: string) => {
       if (!runPromise) {
-        runPromise = context.router.start(href, {});
+        runPromise = context.router.navigateToPath(href);
       }
 
       return {
