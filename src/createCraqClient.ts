@@ -1,5 +1,6 @@
 import { Context, actionsMiddleware } from 'craq';
 import historyMiddleware from 'router6-history';
+import { Route } from 'router6';
 
 const createCraqClient = (context: Context<any, any>, { renderers }) => {
   context.router.use(historyMiddleware()).use(
@@ -13,9 +14,12 @@ const createCraqClient = (context: Context<any, any>, { renderers }) => {
   let runPromise;
 
   return {
-    run: (href: string) => {
+    run: (to: string | Route) => {
       if (!runPromise) {
-        runPromise = context.router.navigateToPath(href);
+        runPromise =
+          typeof to === 'string'
+            ? context.router.navigateToPath(to)
+            : context.router.navigateToRoute(to);
       }
 
       return {

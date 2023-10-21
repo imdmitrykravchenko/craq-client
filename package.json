@@ -1,6 +1,6 @@
 {
   "name": "craq-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "craq": "^0.1.0",
-    "router6-history": "^0.1.1"
+    "router6-history": "^0.1.2"
   },
   "peerDependencies": {
     "router6": "^0.1.0"
