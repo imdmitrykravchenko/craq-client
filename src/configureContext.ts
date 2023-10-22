@@ -5,25 +5,32 @@ import ClientContext from './ClientContext';
 
 const configureContext = <T, S>(
   {
-    store,
+    getStore,
     actions,
     components,
-    router,
+    getRouter,
   }: {
     actions: Registry<CraqAction<S, any>>;
     components: Registry<T>;
-    store: Store<S, any>;
-    router: Router6;
+    getStore: () => Store<S, any>;
+    getRouter: (context: ClientContext<S, any>) => Router6;
   },
   head = createHead(),
-) =>
-  new ClientContext(
+) => {
+  const clientContext = new ClientContext(
     {
-      store,
-      router,
+      store: getStore(),
       registries: { actions, components },
     },
     head,
   );
+
+  clientContext.router = getRouter(clientContext);
+  clientContext.stats =
+    // @ts-ignore
+    (typeof window !== undefined && window?.__SERVER_STATS__) || {};
+
+  return clientContext;
+};
 
 export default configureContext;

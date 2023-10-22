@@ -1,6 +1,6 @@
 {
   "name": "craq-client",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -10,8 +10,8 @@
   "author": "Dmitry Kravchenko",
   "license": "ISC",
   "dependencies": {
-    "craq": "^0.1.0",
-    "router6-history": "^0.1.2"
+    "craq": "^0.2.0",
+    "craq-route-actions": "^0.1.0"
   },
   "peerDependencies": {
     "router6": "^0.1.0"

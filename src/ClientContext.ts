@@ -15,7 +15,7 @@ export default class ClientContext<S, A> extends Context<S, A> {
     }: {
       registries: Registries<S>;
       store: Store<S, A>;
-      router: Router6;
+      router?: Router6;
     },
     head: Head,
   ) {
