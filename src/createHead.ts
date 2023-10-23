@@ -3,11 +3,13 @@ type MetaItem = {
   name?: string;
   property?: string;
   httpEquiv?: string;
+  uniq?: boolean;
 };
 type HeadLink = {
   rel: string;
   href: string;
   attributes?: Record<string, string>;
+  uniq?: boolean;
 };
 type InlineContent = {
   type: 'style' | 'script';
@@ -27,15 +29,36 @@ type HeadMeta = {
   inlines: InlineContent[];
 };
 
-const setAttributes = (node: Element, attributes: Record<string, string>) =>
+const setAttributes = (node: Element, attributes: Record<string, any>) =>
   Object.entries(attributes)
-    .filter(([_, value]) => value)
+    .filter(
+      ([key, value]) =>
+        value && (typeof value === 'string' || key === 'attributes'),
+    )
     .forEach(([key, value]) => {
-      node.setAttribute(key, value);
+      if (key === 'attributes') {
+        setAttributes(node, value);
+      } else {
+        node.setAttribute(key, value);
+      }
     });
 
-const uniqMetaNames = new Set(['description', 'viewport']);
+const uniqMetaNames = new Set([
+  'description',
+  'viewport',
+  'robots',
+  'keywords',
+  'author',
+]);
 
+const uniqLinkRels = new Set(['canonical']);
+
+const isMetaUniq = (meta: MetaItem) =>
+  uniqMetaNames.has(meta.name) ||
+  meta.uniq ||
+  `${meta.property}`.startsWith('og:') ||
+  `${meta.property}`.startsWith('twitter:');
+const isLinkUniq = (link: HeadLink) => uniqLinkRels.has(link.rel) || link.uniq;
 const createHead = () => {
   const headMeta: HeadMeta = {
     title: '',
@@ -53,6 +76,13 @@ const createHead = () => {
     inlines: [],
   };
 
+  const appendChild = (tagName: string, item: object) => {
+    const node = document.createElement(tagName);
+
+    setAttributes(node, item);
+    document.head.appendChild(node);
+  };
+
   const head = {
     setTitle: (title: string) => {
       document.title = title;
@@ -62,20 +92,50 @@ const createHead = () => {
       headMeta.base = base;
       return head;
     },
-    addMeta: (item: MetaItem) => {
-      let node = document.querySelector(`meta[name="${item.name}"]`);
+    setMeta: (item: MetaItem) => {
+      const uniqProp = ['name', 'property', 'httpEquiv'].find(
+        (name) => name in item,
+      );
 
-      if (!node) {
-        node = document.createElement('meta');
-        document.head.appendChild(node);
+      const node = document.head.querySelector(
+        `meta[${uniqProp}="${item[uniqProp]}"]`,
+      );
+
+      if (node) {
+        setAttributes(node, item);
+      } else {
+        appendChild('meta', item);
       }
 
-      setAttributes(node, item);
+      return head;
+    },
+    addMeta: (item: MetaItem) => {
+      if (isMetaUniq(item)) {
+        return head.setMeta(item);
+      }
+
+      appendChild('meta', item);
+
+      return head;
+    },
+    setLink: (link: HeadLink) => {
+      const node = document.head.querySelector(`link[rel="${link.rel}"]`);
+
+      if (node) {
+        setAttributes(node, link);
+      } else {
+        appendChild('link', link);
+      }
 
       return head;
     },
     addLink: (link: HeadLink) => {
-      headMeta.links.push(link);
+      if (isLinkUniq(link)) {
+        return head.setLink(link);
+      }
+
+      appendChild('link', link);
+
       return head;
     },
     addScript: (script: HeadScript) => {
@@ -86,7 +146,12 @@ const createHead = () => {
       headMeta.inlines.push(inline);
       return head;
     },
-    getLang: () => headMeta.lang,
+    getLang: () => document.documentElement.getAttribute('lang'),
+    setLang: (lang: string) => {
+      document.documentElement.setAttribute('lang', lang);
+
+      return head;
+    },
   };
 
   return head;
