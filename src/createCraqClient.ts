@@ -2,9 +2,12 @@ import { Context } from 'craq';
 import actionsMiddleware from 'craq-route-actions';
 
 const createCraqClient = (context: Context<any, any>, { renderers }) => {
+  const { actions } = context.stats;
+
   context.router.use(
     actionsMiddleware(context, {
-      filter: ({ options }) => options?.serverOnly !== true,
+      filter: ({ options, name }) =>
+        options?.serverOnly !== true && !(actions || {})[name],
       onSuccess: () => {},
       onError: () => {},
     }),
