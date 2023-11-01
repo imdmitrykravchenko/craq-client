@@ -2,7 +2,7 @@ import { Context } from 'craq';
 import actionsMiddleware from 'craq-route-actions';
 
 const createCraqClient = (context: Context<any, any>, { renderers }) => {
-  const { actions } = context.stats;
+  let { actions } = context.stats;
 
   context.router.use(
     actionsMiddleware(context, {
@@ -20,9 +20,14 @@ const createCraqClient = (context: Context<any, any>, { renderers }) => {
       if (!runPromise) {
         const { stats, router } = context;
 
-        runPromise = stats?.error?.route
-          ? router.navigateToRoute(stats.error.route)
-          : router.navigateToPath(href);
+        runPromise = (
+          stats?.error?.route
+            ? router.navigateToRoute(stats.error.route)
+            : router.navigateToPath(href)
+        ).then((route) => {
+          actions = {};
+          return route;
+        });
       }
 
       return {
